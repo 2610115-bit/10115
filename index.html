@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>하루리듬 · 5분 처방전</title>
+
+<!-- PWA: 홈 화면에 앱처럼 설치되게 하는 설정 -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#141E38">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="하루리듬">
+<style>
+:root{
+  --night:#141E38; --ink:#1F2C45; --ink2:#4B5B78; --ink3:#8794AB;
+  --paper:#EDF1F0; --card:#fff; --line:#DAE1E2; --line2:#EBEFEE;
+  --teal:#0F6F68; --teal-soft:#DFEDEB; --teal-mid:#7FB3AC;
+  --sun:#C98B33; --sun-soft:#FAF0DC;
+  --low:#3E8E7E; --mid:#C98B33; --high:#B5523E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,
+  "Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  font-size:16px;line-height:1.65;letter-spacing:-.015em;padding-bottom:40px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.wrap{max-width:600px;margin:0 auto;padding:0 18px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a{color:inherit}
+
+.top{padding:24px 0 12px}
+.brand{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.brand h1{font-size:19px;font-weight:800;margin:0;letter-spacing:-.035em}
+.brand span{font-size:11.5px;color:var(--ink3);font-weight:600}
+.sub{font-size:13.5px;color:var(--ink2);margin:5px 0 0;line-height:1.55}
+
+.page{display:none} .page.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:19px;margin-bottom:13px}
+h2{font-size:11px;letter-spacing:.15em;color:var(--teal);font-weight:800;margin:24px 0 11px}
+h3{font-size:16px;font-weight:700;margin:0 0 5px;letter-spacing:-.025em}
+.hint{font-size:13px;color:var(--ink3);margin:0 0 14px;line-height:1.55}
+.btn{width:100%;background:var(--teal);color:#fff;border-radius:12px;padding:15px;
+  font-size:16px;font-weight:700;letter-spacing:-.02em;display:block;text-align:center;text-decoration:none}
+.btn:disabled{background:#B7C3C2}
+.btn.ghost{background:none;color:var(--teal);box-shadow:inset 0 0 0 1.5px var(--teal)}
+.btn.sm{padding:11px;font-size:14px;border-radius:10px}
+.note{font-size:12px;color:var(--ink3);line-height:1.6;margin:13px 0 0}
+
+.steps2{display:flex;gap:7px;margin-bottom:16px}
+.st2{flex:1;padding:9px 8px;border-radius:10px;background:var(--card);
+  border:1.5px solid var(--line);font-size:11.5px;font-weight:700;color:var(--ink3);text-align:center}
+.st2.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal)}
+.st2.done{border-color:var(--teal-mid);color:var(--teal)}
+.prog{height:5px;background:var(--line2);border-radius:3px;overflow:hidden;margin-bottom:16px}
+.prog i{display:block;height:100%;background:var(--teal);border-radius:3px;transition:width .3s}
+
+.si{padding:15px 0;border-top:1px solid var(--line2)}
+.si:first-child{border-top:0;padding-top:0}
+.si .t{font-size:14.5px;font-weight:600;line-height:1.5;margin-bottom:10px;display:block}
+.si .t b{color:var(--teal);font-weight:800;margin-right:6px}
+.lik{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.lik button{padding:9px 3px;border-radius:9px;background:var(--paper);font-size:11.5px;
+  font-weight:600;color:var(--ink2);line-height:1.3;box-shadow:inset 0 0 0 1.5px transparent}
+.lik button.on{background:var(--teal-soft);color:var(--teal);box-shadow:inset 0 0 0 1.5px var(--teal)}
+
+.q{margin-bottom:21px}
+.qlab{font-size:15px;font-weight:700;margin-bottom:9px;display:block}
+.qlab i{font-style:normal;color:var(--teal);font-weight:800;margin-right:6px}
+.opts{display:flex;flex-wrap:wrap;gap:7px}
+.opt{background:var(--paper);border-radius:9px;padding:9px 13px;font-size:13.5px;
+  font-weight:600;color:var(--ink2);box-shadow:inset 0 0 0 1.5px transparent}
+.opt.on{background:var(--teal-soft);color:var(--teal);box-shadow:inset 0 0 0 1.5px var(--teal)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select,input,textarea{width:100%;padding:12px;border:1.5px solid var(--line);
+  border-radius:10px;background:var(--card);font:inherit;font-size:15px;color:var(--ink);
+  font-variant-numeric:tabular-nums;appearance:none;resize:none}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+label.f{font-size:12.5px;color:var(--ink3);font-weight:600;display:block;margin-bottom:5px}
+
+.result{border-radius:15px;padding:22px;color:#fff;margin-bottom:13px}
+.result.low {background:linear-gradient(155deg,#4B9C8B,#2C7264)}
+.result.norm{background:linear-gradient(155deg,#4E8AA0,#2F6377)}
+.result.mid {background:linear-gradient(155deg,#D29B45,#B0761F)}
+.result.high{background:linear-gradient(155deg,#C36850,#9E3F2E)}
+.result .band{font-size:11.5px;letter-spacing:.14em;font-weight:800;opacity:.92}
+.result .big{font-size:38px;font-weight:800;letter-spacing:-.045em;margin:6px 0 0;line-height:1.1}
+.result .big small{font-size:17px;font-weight:700;opacity:.8;margin-left:3px}
+.result .exp{font-size:13.5px;opacity:.95;margin:11px 0 0;line-height:1.6}
+.rank{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.28)}
+.rankbar{height:9px;background:rgba(255,255,255,.22);border-radius:5px;position:relative;margin:9px 0 7px}
+.rankbar i{position:absolute;top:-3px;width:3px;height:15px;background:#fff;border-radius:2px}
+.rankcap{display:flex;justify-content:space-between;font-size:11px;opacity:.85}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px}
+.mini .lab{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink3)}
+.mini .v{font-size:23px;font-weight:800;letter-spacing:-.04em;line-height:1.3;margin:3px 0 1px}
+.mini .d{font-size:11.5px;color:var(--ink3);line-height:1.45}
+
+.factor{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line2)}
+.factor:first-of-type{border-top:0}
+.factor .ic{flex:0 0 25px;height:25px;border-radius:8px;background:var(--teal-soft);
+  color:var(--teal);display:grid;place-items:center;font-size:12.5px;font-weight:800}
+.factor p{margin:0;font-size:14px;line-height:1.5}
+.factor small{display:block;color:var(--ink3);font-size:12.5px;margin-top:2px}
+
+.pick{border:1.5px solid var(--line);border-radius:13px;padding:16px;margin-bottom:10px;
+  background:var(--card);width:100%;text-align:left;display:block}
+.pick.on{border-color:var(--teal);background:var(--teal-soft)}
+.pick .tag{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--sun);display:block;margin-bottom:5px}
+.pick h4{margin:0 0 4px;font-size:15.5px;font-weight:700;letter-spacing:-.02em}
+.pick p{margin:0;font-size:13px;color:var(--ink2);line-height:1.5}
+.pick .why{font-size:12px;color:var(--teal);margin-top:8px;font-weight:600;line-height:1.5}
+
+.ifthen{background:var(--paper);border-radius:12px;padding:15px;margin:12px 0}
+.ifthen .lead{font-size:13px;font-weight:800;color:var(--teal);letter-spacing:.06em;margin-bottom:7px}
+.ifthen textarea{background:var(--card);min-height:62px;font-size:14.5px;line-height:1.55}
+
+.tip{background:var(--sun-soft);border-radius:12px;padding:14px;margin-bottom:10px}
+.tip h4{margin:0 0 4px;font-size:14.5px;font-weight:700;color:#8E6516}
+.tip p{margin:0;font-size:13.5px;color:#7A5814;line-height:1.55}
+.slist{counter-reset:s;padding:0;margin:10px 0 0;list-style:none}
+.slist li{counter-increment:s;position:relative;padding-left:29px;margin-bottom:9px;
+  font-size:13.5px;line-height:1.55;color:var(--ink2)}
+.slist li::before{content:counter(s);position:absolute;left:0;top:2px;width:20px;height:20px;
+  border-radius:6px;background:var(--teal-soft);color:var(--teal);font-size:11.5px;
+  font-weight:800;display:grid;place-items:center}
+details{border-top:1px solid var(--line2);padding:13px 0 2px}
+details summary{font-size:14.5px;font-weight:700;cursor:pointer;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:10px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";color:var(--teal);font-weight:800;font-size:18px}
+details[open] summary::after{content:"−"}
+.banner{background:var(--night);color:#fff;border-radius:14px;padding:17px;margin-bottom:13px}
+.banner h3{color:#fff;margin-bottom:4px}
+.banner p{margin:0;font-size:13.5px;opacity:.82;line-height:1.55}
+
+.gate{position:fixed;inset:0;background:var(--paper);z-index:100;overflow-y:auto;padding:0 18px}
+.gatein{max-width:520px;margin:0 auto;padding:44px 0 40px}
+.consent{background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:16px;font-size:13px;line-height:1.65;color:var(--ink2);margin-bottom:13px}
+.consent b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line2)}
+th{font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.04em}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.rxwrap{border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 6px 20px rgba(20,30,56,.15)}
+.rxwrap canvas{width:100%;height:auto;display:block;background:var(--night)}
+@media(max-width:400px){ .lik button{font-size:10.5px;padding:9px 2px} .st2{font-size:10.5px} }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate"><div class="gatein">
+  <div class="brand" style="margin-bottom:18px"><h1>하루리듬</h1><span>5분 처방전</span></div>
+  <h3>시작하기 전에</h3>
+  <div class="consent">
+    <b>딱 한 번만 하면 돼요</b>
+    <p style="margin:6px 0 0">14개 문항에 답하면 나에게 맞는 처방전을 만들어줘요.
+      처방전은 이미지로 저장하고, 폰 캘린더에 알림도 등록해요. 그 다음부턴
+      이 웹사이트에 다시 들어올 필요 없어요 — 알림이 대신 챙겨줘요.</p>
+  </div>
+  <div class="card">
+    <label class="f">학번</label>
+    <input id="gsid" placeholder="예) 10115" inputmode="numeric">
+    <button class="btn" id="gstart" style="margin-top:14px" disabled>시작하기</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+<div class="top">
+  <div class="brand"><h1>하루리듬</h1><span id="sidtag"></span></div>
+  <p class="sub" id="subtitle">14개 문항에 한 번만 답하면 처방전을 만들어줘요. 5분이면 끝나요.</p>
+</div>
+
+<div class="page on" id="p-main">
+  <div class="steps2">
+    <div class="st2 on" id="s2a">1 · 지금 어디쯤</div>
+    <div class="st2" id="s2b">2 · 사용습관</div>
+    <div class="st2" id="s2c">3 · 처방전</div>
+  </div>
+  <div class="prog"><i id="prog" style="width:0%"></i></div>
+
+  <div class="card" id="step1">
+    <h3>스마트폰을 쓰면서 이런 적이 있나요</h3>
+    <p class="hint">요즘 한 달을 떠올리며 솔직하게 골라주세요. 정답은 없어요.</p>
+    <div id="scale"></div>
+    <button class="btn" id="n1" disabled style="margin-top:16px">다음</button>
+  </div>
+
+  <div class="card" id="step2" style="display:none">
+    <h3>어떻게 쓰고, 어떻게 자나요</h3>
+    <p class="hint">여기 답이 어디를 바꾸면 좋을지 알려줘요.</p>
+    <div class="q"><span class="qlab"><i>9</i>평일에 하루 몇 시간쯤 스마트폰을 쓰나요?</span>
+      <div class="opts" data-k="use"></div></div>
+    <div class="q"><span class="qlab"><i>10</i>평일에 보통 몇 시간 자나요?</span>
+      <div class="opts" data-k="slp"></div></div>
+    <div class="q"><span class="qlab"><i>11</i>평소 잠을 잘 자나요?</span>
+      <div class="opts" data-k="qual"></div></div>
+    <div class="q"><span class="qlab"><i>12</i>게임을 얼마나 자주 하나요?</span>
+      <div class="opts" data-k="game"></div></div>
+    <div class="q"><span class="qlab"><i>13</i>동영상을 얼마나 자주 보나요?</span>
+      <div class="opts" data-k="video"></div></div>
+    <div class="q"><span class="qlab"><i>14</i>SNS를 얼마나 자주 하나요?</span>
+      <div class="opts" data-k="sns"></div></div>
+    <button class="btn" id="go" disabled>처방전 만들기</button>
+    <button class="btn ghost sm" id="back1" style="margin-top:9px">앞으로 돌아가기</button>
+  </div>
+  <p class="note" id="note1">이 웹사이트는 <b>중독을 진단하지 않아요.</b> 초등학교 4학년 2,404명
+    설문 자료에서 내가 어디쯤인지 보여주고, 스스로 관리할 방법을 찾도록 돕는 것이 목적이에요.</p>
+
+  <div id="out" style="display:none"></div>
+</div>
+
+<div class="page" id="p-setup"><div id="setupbody"></div></div>
+</div>
+
+<script>
+"use strict";
+const mem={};
+const store={
+  async get(k){if(window.storage){try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null}catch(e){return mem[k]??null}}return mem[k]??null},
+  async set(k,v){if(window.storage){try{await window.storage.set(k,JSON.stringify(v));return}catch(e){}}mem[k]=v}
+};
+
+/* ══════════════════════════════════════════════════════════════
+   구글폼 설정 — 조사 담당자가 여기만 채웁니다.
+   앱의 '조사 설정' 화면이 만들어 주는 줄을 그대로 붙여넣으세요.
+   ══════════════════════════════════════════════════════════════ */
+const FORM={ id:'', e:[] };
+const FIELDS=['학번','척도점수','8문항응답','평일사용시간','수면시간',
+  '수면의질','게임빈도','동영상빈도','SNS빈도','나무예측','실천항목','다짐문구','알림기간'];
+
+function formURL(v){
+  if(!FORM.id||FORM.e.length<FIELDS.length) return null;
+  return `https://docs.google.com/forms/d/e/${FORM.id}/viewform?usp=pp_url&`
+    +FORM.e.map((k,i)=>k+'='+encodeURIComponent(v[i]??'')).join('&');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   [A] 과의존 척도 단축형 8문항 (원자료 15문항 중 선정, α=.840, r=.962)
+   ══════════════════════════════════════════════════════════════ */
+const SCALE=[
+ {id:'C01',t:'스마트폰을 너무 많이 써서 학교 성적이 떨어진 것 같다'},
+ {id:'C03',t:'너무 자주 또는 오래 한다고 가족이나 친구에게 잔소리를 들은 적이 있다'},
+ {id:'C04',t:'스마트폰을 하느라 하던 일이나 공부에 집중이 안 된 적이 있다'},
+ {id:'C06',t:'스마트폰을 쓰지 못하면 온 세상을 잃은 것 같은 기분이 든다'},
+ {id:'C08',t:'스마트폰을 쓸 수 없게 된다면 견디기 힘들 것 같다'},
+ {id:'C09',t:'스마트폰이 없으면 안절부절 못하고 초조해진다'},
+ {id:'C12',t:'스마트폰 쓰는 시간을 줄이려고 해봤지만 잘 안 된다'},
+ {id:'C14',t:'스마트폰에 많은 시간을 쓰는 것이 습관이 되었다'}
+];
+const LIK=['전혀<br>그렇지 않다','그렇지<br>않은 편','그런<br>편이다','매우<br>그렇다'];
+const PCT={8:0,9:4,10:7,11:10,12:14,13:19,14:25,15:31,16:39,17:51,18:60,19:68,
+  20:76,21:82,22:88,23:93,24:95,25:97,26:98,27:99,28:99,29:100,30:100,31:100,32:100};
+function band(s){
+  if(s<=13)return{k:'low', n:'낮음',d:'또래 중에서 낮은 편이에요. 지금 습관을 이어가면 돼요.'};
+  if(s<=17)return{k:'norm',n:'보통',d:'또래와 비슷한 정도예요. 크게 걱정할 상태는 아니에요.'};
+  if(s<=21)return{k:'mid', n:'주의',d:'조금 신경 쓸 필요가 있어요. 습관 하나만 바꿔봐요.'};
+  return      {k:'high',n:'높음',d:'또래 중 높은 편이에요. 혼자 참기보다 방법을 바꾸는 편이 나아요.'};
+}
+
+/* ══════════════════════════════════════════════════════════════
+   [B] 의사결정나무 — 6개 습관 문항만으로 예측
+   KCYPS 2018 초4 2차년도 2,404명 · 깊이3 · 교차검증 AUC .646
+   ══════════════════════════════════════════════════════════════ */
+function classify(f){
+  const trail=[]; let rate,n;
+  if(f.use<=4.5){ trail.push('use-low');
+    if(f.game<=2.5){ trail.push('game-low');
+      if(f.freq<=2.50){rate=8.1;n=197;} else {rate=13.1;n=260;trail.push('freq-high');}
+    } else { trail.push('game-high');
+      if(f.qual<=3.5){rate=25.5;n=627;trail.push('qual-low');} else {rate=15.8;n=209;} }
+  } else { trail.push('use-high');
+    if(f.qual<=3.5){ trail.push('qual-low');
+      if(f.use<=5.5){rate=34.4;n=451;} else {rate=46.7;n=360;trail.push('use-veryhigh');}
+    } else { trail.push('qual-good');
+      if(f.freq<=3.17){rate=20.4;n=108;} else {rate=30.2;n=192;trail.push('freq-high');} } }
+  return {rate,n,trail};
+}
+const USEPCT={1:0,2:1,3:7,4:23,5:54,6:80,7:89};
+
+const CARDS={
+ sleep:{t:'잘 때 폰을 방 밖에 두기',d:'자기 전 30분부터 폰을 다른 방 정해진 자리에 둡니다.',
+   why:'하루 2시간 넘게 쓰는 친구들 중 "매우 잘 잔다"는 주의군 27%, "못 자는 편"은 46%였어요. 수면의 질은 우울과도 함께 움직이지만(r=-.24), 우울을 빼고 봐도 관련이 조금 남아 있어(r=-.09) 해볼 만해요.',
+   checks:['자기 전 폰을 정해진 자리에 두기','침대에서 폰 보지 않기']},
+ game:{t:'게임 시간만 따로 정하기',d:'게임은 하루 한 번, 정해진 시간에만 합니다.',
+   why:'하루 2시간 미만으로 쓰는 친구들 중에서도 게임을 "가끔 이상" 하면 주의군 비율이 눈에 띄게 올라갔어요. 나무에서도 사용시간 다음으로 게임 빈도가 갈림길이 됐고요.',
+   checks:['정한 시간에만 게임하기','끝내기로 한 시각에 끄기']},
+ cue:{t:'알림 끄기',d:'꼭 필요한 것만 남기고 앱 알림을 끕니다.',
+   why:'가장 많이 나온 답은 "많은 시간 쓰는 게 습관이 됐다" 54%, "그만해야지 하면서 계속한다" 43%였어요. 반면 "없으면 초조하다"는 14%뿐이었고요. 불안해서가 아니라 자동으로 손이 가는 게 문제라는 뜻이에요.',
+   checks:['알림 꺼두기','알림 때문에 폰 열지 않기']},
+ swap:{t:'대신 할 일 미리 정하기',d:'폰이 하고 싶어질 때 대신 할 일을 한 가지 정해둡니다.',
+   why:'"줄이려다 실패한다"에 그렇다고 답한 친구가 31%였어요. 세 명 중 한 명은 이미 그냥 줄이기를 해봤다가 실패했다는 뜻이라, 뺀 자리에 넣을 것을 정해두는 편이 나아요.',
+   checks:['폰 대신 정해둔 일 하기']}
+};
+const pickLever=f=>(f.use>=5&&f.qual<=3)?'sleep':(f.game>=3?'game':'cue');
+
+const USE=['전혀 안 함','30분 미만','30분~1시간','1~2시간','2~3시간','3~4시간','4시간 이상'];
+const SLP=['6시간 미만','6~7시간','7~8시간','8~9시간','9시간 이상'];
+const SLPV=[5.5,6.5,7.5,8.5,9.5];
+const QUAL=['매우 못 잔다','못 자는 편','잘 자는 편','매우 잘 잔다'];
+const FREQ=['전혀 안 함','거의 안 함','가끔','자주'];
+
+const S={sc:{}};
+let DB={sid:'',lever:null,plan:'',cutoff:21,duration:14,latest:null};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ── 문항 그리기 ── */
+$('#scale').innerHTML=SCALE.map((q,i)=>`<div class="si">
+  <span class="t"><b>${i+1}</b>${q.t}</span>
+  <div class="lik" data-sc="${q.id}">${LIK.map((l,j)=>
+    `<button type="button" data-v="${j+1}">${l}</button>`).join('')}</div></div>`).join('');
+$$('[data-sc]').forEach(box=>box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  [...box.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');
+  S.sc[box.dataset.sc]=+b.dataset.v;prog()}));
+function prog(){const n=Object.keys(S.sc).length;
+  $('#prog').style.width=(n/14*100)+'%';$('#n1').disabled=n<SCALE.length}
+function chips(box,list,cb){box.innerHTML='';
+  list.forEach((t,i)=>{const b=document.createElement('button');
+    b.className='opt';b.textContent=t;b.type='button';
+    b.onclick=()=>{[...box.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');cb(i+1);chk()};
+    box.appendChild(b)})}
+function timeOpts(sel,from,to,def){sel.innerHTML='';
+  for(let h=from;h<=to;h++){const o=document.createElement('option');
+    o.value=h;o.textContent=(h>=24?'새벽 ':'')+(h>=24?h-24:h)+'시';
+    if(h===def)o.selected=true;sel.appendChild(o)}}
+const H={};
+chips($('[data-k=use]'),USE,v=>H.use=v);
+chips($('[data-k=slp]'),SLP,v=>H.slp=v);
+chips($('[data-k=qual]'),QUAL,v=>H.qual=v);
+chips($('[data-k=game]'),FREQ,v=>H.game=v);
+chips($('[data-k=video]'),FREQ,v=>H.video=v);
+chips($('[data-k=sns]'),FREQ,v=>H.sns=v);
+function chk(){
+  const n=Object.keys(S.sc).length+[H.use,H.slp,H.qual,H.game,H.video,H.sns].filter(Boolean).length;
+  $('#prog').style.width=(n/14*100)+'%';
+  $('#go').disabled=!(H.use&&H.slp&&H.qual&&H.game&&H.video&&H.sns);
+}
+$('#n1').onclick=()=>{$('#step1').style.display='none';$('#step2').style.display='block';
+  $('#s2a').className='st2 done';$('#s2b').className='st2 on';chk();window.scrollTo({top:0,behavior:'smooth'})};
+$('#back1').onclick=()=>{$('#step2').style.display='none';$('#step1').style.display='block';
+  $('#s2a').className='st2 on';$('#s2b').className='st2';prog();window.scrollTo({top:0,behavior:'smooth'})};
+
+const FACT={
+ 'use-high':['스마트폰 사용시간이 긴 편이에요','평일 2시간을 넘겨요'],
+ 'use-veryhigh':['사용시간이 많이 긴 편이에요','평일 3시간을 넘겨요'],
+ 'use-low':['사용시간은 길지 않아요','평일 2시간 안쪽이에요'],
+ 'game-high':['게임을 자주 하는 편이에요','나무에서 사용시간 다음으로 큰 갈림길이었어요'],
+ 'game-low':['게임은 자주 하지 않아요',''],
+ 'qual-low':['잠을 푹 잤다고 느끼지 못해요','잠든 시간의 길이보다 이 답이 더 관련 있었어요'],
+ 'qual-good':['잠은 잘 잔다고 느껴요',''],
+ 'freq-high':['동영상·SNS도 자주 보는 편이에요','']
+};
+
+$('#go').onclick=async()=>{
+  const sc=SCALE.reduce((s,q)=>s+S.sc[q.id],0);
+  const b=band(sc), less=PCT[sc]??0;
+  const freq=(H.game+H.video+H.sns)/3;
+  const f={use:H.use,game:H.game,freq,qual:H.qual};
+  const r=classify(f), lev=pickLever(f);
+  DB.latest={score:sc,rate:r.rate,use:H.use,slp:SLPV[H.slp-1],qual:H.qual,game:H.game,video:H.video,sns:H.sns};
+  DB.lever=DB.lever||lev; await store.set('db',DB);
+  const facts=[...new Set(r.trail)].map(k=>FACT[k]).filter(Boolean);
+  const gap=sc>=18&&r.rate<25;
+
+  $('#step1').style.display='none';$('#step2').style.display='none';$('#note1').style.display='none';
+  $('#s2b').className='st2 done';$('#s2c').className='st2 on';$('#prog').style.width='100%';
+  $('#out').style.display='block';
+  renderResult(sc,b,less,r,facts,gap);
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+function renderResult(sc,b,less,r,facts,gap){
+  const lv=CARDS[DB.lever];
+  $('#out').innerHTML=`
+   <div class="result ${b.k}">
+     <div class="band">지금 어디쯤 · ${b.n}</div>
+     <div class="big num">${sc}<small>/ 32점</small></div>
+     <div class="exp">${b.d}</div>
+     <div class="rank"><div class="rankcap"><span>낮음</span><span>높음</span></div>
+       <div class="rankbar"><i style="left:${less}%"></i></div>
+       <div style="font-size:13px">같은 학년 2,404명 중 <b class="num">${less}%</b>가 나보다 낮아요.</div></div>
+   </div>
+   <div class="two">
+     <div class="mini"><div class="lab">척도 8문항</div>
+       <div class="v">${b.n}</div><div class="d">지금 상태를 직접 물어본 결과예요.</div></div>
+     <div class="mini"><div class="lab">사용습관만 보면</div>
+       <div class="v num">${Math.round(r.rate)}%</div>
+       <div class="d">나처럼 쓰는 ${r.n}명 중 이만큼이 주의군이었어요.</div></div>
+   </div>
+   ${gap?`<div class="tip"><h4>두 결과가 엇갈려요</h4>
+     <p>사용시간은 많지 않은데 척도 점수는 높은 편이에요. 오래 써서가 아니라
+        <b>조절이 잘 안 되는 쪽</b>일 수 있어요. 시간을 줄이는 것보다 습관의 방아쇠를
+        없애는 편이 나을 거예요.</p></div>`:''}
+
+   <h2>사용습관에서 이런 점이 보였어요</h2>
+   <div class="card">${facts.map((x,i)=>`<div class="factor"><span class="ic">${i+1}</span>
+     <p>${x[0]}${x[1]?`<small>${x[1]}</small>`:''}</p></div>`).join('')}
+     <div class="factor"><span class="ic">${facts.length+1}</span>
+       <p>같은 학년 중 ${USEPCT[H.use]}%가 나보다 적게 써요<small>평일 ${USE[H.use-1]}</small></p></div>
+   </div>
+
+   <div class="banner"><h3>여기 하나만 바꿔봐요</h3>
+     <p>데이터에서 가장 크게 갈린 지점은 <b>${lv.t}</b>였어요. 오늘 이거 하나만 정하고 가면 돼요.</p></div>
+
+   <h2>바꿀 것 고르기</h2>
+   <div class="card">
+     <p class="hint">데이터가 추천한 건 표시된 카드예요. 하지만 내가 지킬 수 있는 걸 고르는 게 더 중요해요.</p>
+     ${Object.entries(CARDS).map(([k,c])=>`
+       <button class="pick ${DB.lever===k?'on':''}" data-card="${k}">
+         ${DB.lever===k?'<span class="tag">데이터 추천</span>':''}
+         <h4>${c.t}</h4><p>${c.d}</p><div class="why">${c.why}</div></button>`).join('')}
+   </div>
+
+   <h2>다짐하고 처방전 만들기</h2>
+   <div class="card">
+     <p class="hint">"열심히 하겠다"보다 <b>언제·어디서</b>를 정해두면 훨씬 잘 지켜져요.
+       오늘 여기서 한 번만 정해두면, 나머지는 알림이 이어가요.</p>
+     <div class="ifthen"><div class="lead">만약 ~ 하면, 나는 ~ 한다</div>
+       <textarea id="planText" placeholder="예) 밤 9시가 되면, 나는 폰을 거실 충전기에 두고 방에 들어간다.">${DB.plan||''}</textarea></div>
+     <div class="grid2">
+       <div><label class="f">알림받을 시각</label><select id="cutoff"></select></div>
+       <div><label class="f">알림받을 기간</label><select id="duration">
+         <option value="7">1주일</option><option value="14">2주일</option><option value="21">3주일</option>
+       </select></div>
+     </div>
+     <button class="btn" id="makeRx" style="margin-top:14px">처방전 만들기</button>
+   </div>
+
+   <div id="rxarea"></div>
+
+   <details style="border-top:none;padding-top:0">
+     <summary>왜 오늘 한 번으로 충분할까요</summary>
+     <p class="hint" style="margin:10px 0 0">"언제, 어디서 하겠다"를 미리 정해두면(다짐) 실제로
+       지킬 확률이 크게 올라간다고 알려져 있어요. 여기에 폰 알림을 더하면, 이 웹사이트를
+       다시 열지 않아도 계획이 계속 이어져요. 다만 매일 챙기는 것보다는 효과가 약할 수 있고,
+       중간에 흐트러지면 스스로 알아차려야 해요.</p></details>
+
+   <button class="btn ghost sm" onclick="location.reload()" style="margin-top:13px">처음부터 다시</button>`;
+
+  $$('[data-card]').forEach(x=>x.onclick=async()=>{
+    DB.lever=x.dataset.card;await store.set('db',DB);renderResult(sc,b,less,r,facts,gap)});
+  timeOpts($('#cutoff'),19,24,DB.cutoff);
+  $('#cutoff').onchange=e=>DB.cutoff=+e.target.value;
+  [...$('#duration').options].forEach(o=>o.selected=(+o.value===DB.duration));
+  $('#duration').onchange=e=>DB.duration=+e.target.value;
+  $('#makeRx').onclick=async()=>{
+    DB.plan=$('#planText').value.trim();DB.cutoff=+$('#cutoff').value;DB.duration=+$('#duration').value;
+    await store.set('db',DB);
+    renderRx();
+  };
+}
+
+/* ══════════════ 처방전 이미지 + 캘린더 알림 + 제출 ══════════════ */
+function wrapLines(ctx,text,maxWidth){
+  const words=text.split(' '); const lines=[]; let line='';
+  for(const w of words){
+    const test=line?line+' '+w:w;
+    if(ctx.measureText(test).width>maxWidth && line){lines.push(line);line=w;}
+    else line=test;
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+function drawCard(canvas){
+  const W=1080,H=1350; canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#141E38');g.addColorStop(1,'#0F6F68');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,.08)';
+  ctx.beginPath();ctx.arc(W-80,120,220,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle='#fff';
+  ctx.font='800 34px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.fillText('하루리듬 처방전',64,110);
+  ctx.font='400 24px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.globalAlpha=.7;
+  const today=new Date();
+  ctx.fillText(`${today.getFullYear()}.${today.getMonth()+1}.${today.getDate()}  ·  학번 ${DB.sid}`,64,148);
+  ctx.globalAlpha=1;
+
+  ctx.font='800 30px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.globalAlpha=.65;
+  ctx.fillText('오늘부터 이것 하나만',64,246);
+  ctx.globalAlpha=1;
+  ctx.font='800 58px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  wrapLines(ctx,CARDS[DB.lever].t,W-128).forEach((ln,i)=>ctx.fillText(ln,64,320+i*68));
+
+  const planY=320+wrapLines(ctx,CARDS[DB.lever].t,W-128).length*68+70;
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.beginPath();
+  ctx.moveTo(64,planY-40);ctx.lineTo(W-64,planY-40);ctx.stroke();
+
+  ctx.font='700 26px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.globalAlpha=.7; ctx.fillText('나의 다짐',64,planY);ctx.globalAlpha=1;
+  ctx.font='500 36px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  const planLines=wrapLines(ctx,DB.plan||'만약 정한 시각이 되면, 폰을 정해둔 자리에 둔다.',W-128);
+  planLines.forEach((ln,i)=>ctx.fillText(ln,64,planY+56+i*48));
+
+  const y2=planY+56+planLines.length*48+70;
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.beginPath();
+  ctx.moveTo(64,y2-40);ctx.lineTo(W-64,y2-40);ctx.stroke();
+  ctx.font='700 26px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.globalAlpha=.7;ctx.fillText('알림',64,y2);ctx.globalAlpha=1;
+  ctx.font='500 32px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  const durLabel=DB.duration===7?'1주일':(DB.duration===14?'2주일':'3주일');
+  ctx.fillText(`매일 ${DB.cutoff%24}시 · ${durLabel} 동안`,64,y2+50);
+
+  ctx.font='400 24px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.globalAlpha=.55;
+  ctx.fillText('잠금화면에 저장해두면 계속 보여요',64,H-56);
+  ctx.globalAlpha=1;
+}
+function icsText(){
+  const now=new Date();
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),DB.cutoff%24,0,0);
+  if(start<=now) start.setDate(start.getDate()+1);
+  const end=new Date(start.getTime()+15*60000);
+  const f=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')
+    +'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+  const desc=(DB.plan||'폰을 내려놓을 시간이에요').replace(/[\r\n]+/g,' ');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//하루리듬//처방전//KO',
+    'BEGIN:VEVENT','UID:'+Date.now()+'@harudream','DTSTAMP:'+f(now),
+    'DTSTART:'+f(start),'DTEND:'+f(end),'RRULE:FREQ=DAILY;COUNT='+DB.duration,
+    'SUMMARY:폰 내려놓을 시간','DESCRIPTION:'+desc,
+    'BEGIN:VALARM','TRIGGER:-PT0M','ACTION:DISPLAY','DESCRIPTION:폰 내려놓을 시간','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function submitVals(){
+  const raw=SCALE.map(q=>S.sc[q.id]??'').join(',');
+  const L=DB.latest||{};
+  const durLabel=DB.duration===7?'1주일':(DB.duration===14?'2주일':'3주일');
+  return [DB.sid,L.score??'',raw,L.use??'',L.slp??'',L.qual??'',L.game??'',L.video??'',L.sns??'',
+    L.rate??'',CARDS[DB.lever]?CARDS[DB.lever].t:'',DB.plan||'',durLabel];
+}
+function renderRx(){
+  const area=$('#rxarea');
+  const vals=submitVals();
+  const ready=FORM.id&&FORM.e.length>=FIELDS.length;
+  area.innerHTML=`
+   <h2>내 처방전</h2>
+   <div class="rxwrap"><canvas id="rxcanvas"></canvas></div>
+   <button class="btn" id="saveImg">이미지로 저장하기</button>
+   <p class="note" id="imgnote"></p>
+   <button class="btn ghost sm" id="icsBtn" style="margin-top:10px">캘린더에 알림 등록하기</button>
+   <p class="note" id="icsNote">이 웹사이트는 알림을 스스로 못 보내요. 대신 폰 <b>캘린더 앱</b>이 정해둔
+     시각에 ${DB.duration===7?'1주일':(DB.duration===14?'2주일':'3주일')} 동안 매일 울려주게 만드는
+     방식이에요 — 회의나 시간표 알림이 울리는 것과 같은 원리예요. 버튼을 누르면 새 화면이 뜨는데,
+     거기서 <b>"추가" 또는 "가져오기"</b>를 눌러야 진짜로 등록돼요. 그냥 닫으면 알림이 안 울려요.</p>
+   <p class="note" id="icsFallback" style="display:none">화면이 안 뜨거나 뭘 눌러야 할지 모르겠으면
+     <a id="icsFile" href="#" style="color:var(--teal);font-weight:700;text-decoration:underline">이 파일로 받기</a>를
+     누른 다음, 다운로드된 파일을 한 번 더 탭해서 열어보세요.</p>
+
+   <h2>선생님께 전달</h2>
+   <div class="card">
+     <p class="hint">${ready?'따로 누를 것 없이, 이 화면이 뜨는 순간 자동으로 선생님 스프레드시트에 기록돼요.'
+       :'조사 담당자가 구글 폼을 아직 연결하지 않았어요.'}</p>
+     <div id="submitStatus" class="tip" style="margin-bottom:0">
+       <h4>${ready?'전달하는 중…':'제출 설정이 아직 안 됐어요'}</h4>
+       <p>${ready?'잠시만요.':'담당자가 설정을 마치면 다음부터 자동으로 전달돼요.'}</p>
+     </div>
+     ${!ready?`<button class="btn ghost sm" style="margin-top:10px" onclick="goSetup()">조사 설정 열기</button>`:''}
+     <details style="border-top:none;padding-top:10px"><summary>무엇이 전달되나요</summary>
+       <div class="tscroll" style="margin-top:10px"><table><tbody>
+       ${FIELDS.map((f,i)=>`<tr><td>${f}</td><td class="n">${vals[i]===''?'—':vals[i]}</td></tr>`).join('')}
+       </tbody></table></div></details>
+   </div>`;
+  const canvas=$('#rxcanvas'); drawCard(canvas);
+  $('#saveImg').onclick=()=>{
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='하루리듬-처방전.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      $('#imgnote').textContent='저장했어요. 안 되면 이미지를 길게 눌러 저장하세요.';
+    },'image/png');
+  };
+  $('#icsBtn').onclick=()=>{
+    const ics=icsText();
+    // 1차: 새 탭으로 열어서 폰이 캘린더 앱의 '추가' 화면을 직접 띄우도록 시도
+    const dataUri='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
+    const win=window.open(dataUri,'_blank');
+    // 2차 안전장치: 새 탭이 막히거나 아무 반응이 없을 경우를 대비해 파일 다운로드 링크도 함께 켜둠
+    const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    $('#icsFile').href=url; $('#icsFile').download='하루리듬-알림.ics';
+    $('#icsFallback').style.display='block';
+    $('#icsBtn').textContent='등록 화면을 확인하세요';
+    if(!win){ $('#icsNote').textContent='자동으로 화면이 안 떴어요. 아래 "이 파일로 받기"를 눌러주세요.'; }
+  };
+  if(ready) trySubmit(vals);
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* 새 탭 없이 백그라운드로 구글 폼에 직접 전송.
+   mode:'no-cors' 특성상 응답 내용은 읽을 수 없어서, 네트워크 자체가 실패한
+   경우(오프라인 등)만 확실히 잡아낼 수 있음 — 그 외엔 성공으로 간주함. */
+async function submitToForm(vals){
+  const body=new URLSearchParams();
+  FORM.e.forEach((k,i)=>body.append(k,vals[i]??''));
+  await fetch(`https://docs.google.com/forms/d/e/${FORM.id}/formResponse`,{
+    method:'POST', mode:'no-cors', body
+  });
+}
+function trySubmit(vals){
+  const st=$('#submitStatus'); if(!st)return;
+  st.innerHTML='<h4>전달하는 중…</h4><p>잠시만요.</p>';
+  submitToForm(vals).then(()=>{
+    const s=$('#submitStatus'); if(s) s.innerHTML='<h4>전달했어요 ✓</h4><p>선생님 스프레드시트에 기록됐어요.</p>';
+  }).catch(()=>{
+    const s=$('#submitStatus'); if(!s)return;
+    s.innerHTML='<h4>전달하지 못했어요</h4><p>인터넷 연결을 확인해 주세요.</p>'
+      +'<button class="btn ghost sm" id="retrySubmit" style="margin-top:10px">다시 시도</button>';
+    $('#retrySubmit').onclick=()=>trySubmit(vals);
+  });
+}
+
+/* ══════════════ 조사 설정 ══════════════ */
+function goSetup(){goTo('setup')}
+function goTo(id){
+  $$('.page').forEach(p=>p.classList.remove('on'));
+  $('#p-'+id).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='setup')renderSetup();
+}
+// 조사 설정(담당자용)은 학생 화면 어디에도 노출하지 않고,
+// 주소 끝에 #setup 을 붙였을 때만 열리게 함 (예: https://.../index.html#setup)
+if (location.hash === '#setup') {
+  $('#gate').style.display='none';
+  goTo('setup');
+}
+
+function renderSetup(){
+  const ready=FORM.id&&FORM.e.length>=FIELDS.length;
+  $('#setupbody').innerHTML=`
+   <div class="card"><h3>구글 폼 연결하기</h3>
+     <p class="hint">${ready?'연결이 끝났어요. 학생이 처방전을 만드는 순간 자동으로 전달돼요.'
+       :'아직 연결 전이에요. 아래 순서대로 한 번만 해두면 돼요.'}</p>
+     <details open><summary>1. 구글 폼 만들기</summary>
+       <p class="hint" style="margin:10px 0">아래 13개를 <b>단답형</b> 질문으로, 이 순서 그대로 만들어요.
+         질문 이름은 바꿔도 되지만 <b>순서는 꼭 지켜야</b> 해요.</p>
+       <ol class="slist">${FIELDS.map(f=>`<li>${f}</li>`).join('')}</ol>
+       <p class="note">'응답을 스프레드시트로 보기'를 켜두면 엑셀처럼 정리돼요.</p></details>
+     <details><summary>2. 미리 채워진 링크 복사</summary>
+       <ol class="slist">
+         <li>폼 편집 화면 오른쪽 위 점 세 개 → <b>미리 채워진 링크 가져오기</b></li>
+         <li>13개 칸에 <b>1, 2, 3 … 13</b>을 순서대로 적어요</li>
+         <li><b>링크 가져오기</b> → <b>링크 복사</b></li></ol></details>
+     <details><summary>3. 여기에 붙여넣기</summary>
+       <textarea id="pre" style="height:90px;font-size:12px;margin-top:10px"
+         placeholder="복사한 링크를 붙여넣으세요"></textarea>
+       <button class="btn sm" id="parse" style="margin-top:10px">읽어들이기</button>
+       <div id="parsed"></div></details></div>
+   <div class="card"><h3>지금 연결 상태</h3>
+     <p class="hint">${ready?`폼 ID <b>${FORM.id.slice(0,14)}…</b> · 항목 ${FORM.e.length}개`:'연결된 폼이 없어요.'}</p>
+     ${ready?`<a class="btn ghost sm" href="${formURL(FIELDS.map((_,i)=>'테스트'+(i+1)))}"
+        target="_blank" rel="noopener">테스트로 열어보기</a>`:''}</div>
+   <div class="card"><h3>이 설계에 대해</h3>
+     <p class="hint">학생은 웹사이트에 <b>한 번만</b> 들어와요. 문항에 답하고, 바꿀 것을 고르고,
+       처방전 이미지와 캘린더 알림을 받아가면 끝이에요. 이후엔 폰 알림이 실천을 이어가요.</p>
+     <p class="hint" style="margin-bottom:0">한 번만 방문하는 대신, <b>이 웹만으로는 효과가 있었는지
+       확인할 수 없어요.</b> 정말 효과를 측정하고 싶다면, 몇 주 뒤 같은 14문항을 종이 설문이나
+       별도 설문으로 한 번 더 돌리는 방법을 권해요. 그때는 이 웹을 쓴 반과 안 쓴 반을 비교하면
+       더 설득력 있는 결과가 나와요.</p></div>
+   <div class="card"><h3>이 웹사이트가 하지 않는 것</h3>
+     <ol class="slist">
+       <li>중독을 진단하지 않아요. 또래 사이 위치를 보여줄 뿐이에요.</li>
+       <li>사용시간을 자동으로 재지 못해요. 웹은 다른 앱에 접근할 권한이 없어요.</li>
+       <li>앱 사용을 강제로 막지 못해요. 같은 이유예요.</li>
+       <li>우울·공격성 문항은 넣지 않았어요. 상관은 더 높았지만(.41, .45)
+           같은 시점 조사라 인과를 말할 수 없고, 진단으로 보일 수 있어서예요.</li></ol></div>
+   <button class="btn ghost sm" onclick="goTo('main')">돌아가기</button>`;
+  const pb=$('#parse');if(!pb)return;
+  pb.onclick=()=>{
+    const t=$('#pre').value.trim();
+    const idm=t.match(/forms\/d\/e\/([\w-]+)\//);
+    const ids=[...t.matchAll(/(entry\.\d+)=([^&#]*)/g)];
+    if(!idm||ids.length<FIELDS.length){
+      $('#parsed').innerHTML=`<p class="note" style="color:var(--high)">
+        링크를 다시 확인해 주세요. 폼 ID와 항목 ${FIELDS.length}개가 모두 있어야 해요.
+        (지금 찾은 항목 ${ids.length}개)</p>`;return}
+    const sorted=ids.map(m=>({k:m[1],v:parseInt(decodeURIComponent(m[2]),10)}))
+      .filter(x=>!isNaN(x.v)).sort((a,b)=>a.v-b.v);
+    const keys=(sorted.length>=FIELDS.length?sorted:ids.map(m=>({k:m[1]}))).map(x=>x.k);
+    $('#parsed').innerHTML=`
+      <p class="note">이 순서가 맞는지 확인하세요.</p>
+      <div class="tscroll"><table><thead><tr><th class="n">#</th><th>질문</th><th>항목 ID</th></tr></thead>
+      <tbody>${FIELDS.map((f,i)=>`<tr><td class="n">${i+1}</td><td>${f}</td>
+        <td style="font-size:11px">${keys[i]||'—'}</td></tr>`).join('')}</tbody></table></div>
+      <p class="hint" style="margin:13px 0 6px">맞다면 아래를 복사해 HTML 파일의
+        <b>const FORM</b> 부분을 바꿔주세요.</p>
+      <textarea id="cfg" style="height:96px;font-size:11.5px;font-family:ui-monospace,monospace">const FORM={
+  id:'${idm[1]}',
+  e:[${keys.slice(0,FIELDS.length).map(k=>`'${k}'`).join(',')}]
+};</textarea>
+      <button class="btn ghost sm" id="cfgcopy" style="margin-top:9px">복사하기</button>`;
+    $('#cfgcopy').onclick=()=>{const x=$('#cfg');x.select();x.setSelectionRange(0,99999);
+      try{document.execCommand('copy');$('#cfgcopy').textContent='복사했어요'}catch(e){}};
+  };
+}
+
+/* ══════════════ 시작 ══════════════ */
+$('#gsid').oninput=()=>{$('#gstart').disabled=$('#gsid').value.trim().length<1};
+$('#gstart').onclick=async()=>{
+  DB.sid=$('#gsid').value.trim();
+  await store.set('db',DB);
+  $('#sidtag').textContent='학번 '+DB.sid;
+  $('#gate').style.display='none';
+};
+(async()=>{
+  const s=await store.get('db');
+  if(s&&typeof s==='object')DB=Object.assign(DB,s);
+  if(DB.sid){ $('#sidtag').textContent='학번 '+DB.sid; $('#gate').style.display='none'; }
+})();
+
+// PWA: 서비스워커 등록 — 파일:// 로 직접 열면 등록되지 않고, 실제 https 주소에
+// 올렸을 때만 동작해요. 실패해도 사이트 자체는 평소처럼 잘 열려요.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
